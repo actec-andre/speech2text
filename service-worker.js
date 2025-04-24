@@ -1,9 +1,9 @@
 const CACHE_NAME = 'sprach-diktierer-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.png',
   'https://cdn.jsdelivr.net/npm/@stlite/browser@0.76.0/build/style.css',
   'https://cdn.jsdelivr.net/npm/@stlite/browser@0.76.0/build/stlite.js'
 ];

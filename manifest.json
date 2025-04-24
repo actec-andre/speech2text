@@ -2,7 +2,7 @@
   "name": "Sprach-Diktierer",
   "short_name": "Diktierer",
   "description": "Sprache zu Text mit mehrsprachigen technischen Inhalten",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#FF4B4B",
