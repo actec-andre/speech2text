@@ -13,6 +13,7 @@ und dieses Projekt folgt der [Semantischen Versionierung](https://semver.org/spe
   - Web-Entwicklung
   - Data Science
   - DevOps
+  - Odoo (ERP)
 - Anzeige des verwendeten Prompts für mehr Transparenz
 - Automatische Einbeziehung relevanter Fachbegriffe in den Whisper-Prompt
 
