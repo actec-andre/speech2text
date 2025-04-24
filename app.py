@@ -188,6 +188,10 @@ def generate_odoo_prompts():
 # Korrekte Verwendung von audiorecorder gemäß Dokumentation
 audio = audiorecorder("🎙️ Aufnahme starten", "🛑 Aufnahme stoppen")
 
+# Immer den copy_success-Status zurücksetzen, wenn eine neue Audio-Aufnahme gemacht wird
+if "copy_success" in st.session_state:
+    st.session_state.copy_success = False
+
 if len(audio) > 0:
     # Zeige Audio-Player im Browser
     st.audio(audio.export().read(), format="audio/wav")
@@ -273,14 +277,21 @@ if len(audio) > 0:
                 # Buttons-Container
                 col1, col2 = st.columns(2)
                 
-                # Streamlit-basierter Copy-Button
+                # Verbesserte Implementierung des Copy-Buttons mit Session State
                 with col1:
+                    if "copy_success" not in st.session_state:
+                        st.session_state.copy_success = False
+                        
                     if st.button("📋 In die Zwischenablage kopieren", key="copy_btn", use_container_width=True):
                         try:
                             pyperclip.copy(st.session_state.transcribed_text)
-                            st.success("✅ Text in die Zwischenablage kopiert!")
+                            st.session_state.copy_success = True
                         except Exception as e:
                             st.error(f"Fehler beim Kopieren: {str(e)}")
+                    
+                    # Erfolgs-Nachricht anzeigen, ohne Seite neu zu laden
+                    if st.session_state.copy_success:
+                        st.success("✅ Text in die Zwischenablage kopiert!")
                 
                 # Download-Button
                 with col2:

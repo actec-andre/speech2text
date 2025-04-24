@@ -5,6 +5,24 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt folgt der [Semantischen Versionierung](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - Unreleased
+
+### Hinzugefügt
+- Drei spezialisierte Odoo-Prompts für unterschiedliche Fachbereiche:
+  - Entwicklung (Models, Fields, Views, Controllers)
+  - Business-Prozesse (Sales, Purchase, Accounting)
+  - Administration (Access Rights, Cron Jobs, Security)
+- Direkte Anzeige alternativer Transkriptionen für Odoo-Kontext
+- Vereinfachte Auswahl des technischen Kontexts durch Radiobuttons statt Dropdown
+- Odoo (ERP) als Standard-Kontext voreingestellt
+
+### Verbessert
+- Optimierte Prompt-Generierung für Odoo-Fachterminologie
+- Bessere Erkennung typischer Odoo-Begriffskombinationen
+- Automatische Korrektur häufiger Erkennungsfehler (z.B. "Q-Web" → "QWeb")
+- Leistungsoptimierung des Kopiervorgangs ohne Neuberechnung der Transkription
+- Session-Management für nahtlose Benutzererfahrung
+
 ## [0.4.0] - Unreleased
 
 ### Hinzugefügt
