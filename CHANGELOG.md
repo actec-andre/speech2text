@@ -7,6 +7,9 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Experimenteller PWA-Branch mit Stlite-Integration für vollständig browserbasierte Version
+
 ## [0.3.0]
 
 ### Added
