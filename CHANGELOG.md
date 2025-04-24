@@ -7,6 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Added
+- "In die Zwischenablage kopieren"-Button für transkribierten Text
+- Download-Funktion für transkribierte Texte als Textdatei
+
 ## [0.2.0]
 
 ### Added
