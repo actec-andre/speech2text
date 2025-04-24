@@ -4,6 +4,7 @@ import whisper
 import tempfile
 import os
 import base64
+import pyperclip
 
 st.set_page_config(page_title="🗣️ Sprach-Diktierer", layout="centered")
 st.title("🎤 Sprache zu Text")
@@ -43,20 +44,8 @@ def load_whisper_model(model_name):
 def get_text_download_link(text, filename="transkription.txt", link_text="📥 Text herunterladen"):
     """Generiert einen Link, um Text als Datei herunterzuladen"""
     b64 = base64.b64encode(text.encode()).decode()
-    href = f'<a href="data:file/txt;base64,{b64}" download="{filename}">{link_text}</a>'
+    href = f'<a href="data:file/txt;base64,{b64}" download="{filename}" style="text-decoration:none;color:white;background-color:#4CAF50;padding:8px 16px;border-radius:4px;display:inline-block;text-align:center;width:100%;">{link_text}</a>'
     return href
-
-# Funktion zum Erstellen eines Copy-to-Clipboard Buttons
-def get_clipboard_button(text):
-    """Erstellt einen Button, der einen Text in die Zwischenablage kopiert"""
-    escaped_text = text.replace('`', r'\`')
-    return f'''
-    <button onclick="navigator.clipboard.writeText(`{escaped_text}`)
-        .then(() => alert('Text wurde in die Zwischenablage kopiert!'))
-        .catch(err => alert('Fehler beim Kopieren: ' + err))">
-        📋 In die Zwischenablage kopieren
-    </button>
-    '''
 
 # Korrekte Verwendung von audiorecorder gemäß Dokumentation
 audio = audiorecorder("🎙️ Aufnahme starten", "🛑 Aufnahme stoppen")
@@ -84,20 +73,29 @@ if len(audio) > 0:
                 result = model.transcribe(audio_path, **transcription_options)
                 st.success("✅ Fertig!")
                 
-                # Text-Area für Transkription
-                transcribed_text = result["text"]
-                text_area = st.text_area("📝 Transkribierter Text:", transcribed_text, height=200)
+                # Text-Area für Transkription und Session State für die Zwischenablage
+                if 'transcribed_text' not in st.session_state:
+                    st.session_state.transcribed_text = result["text"]
+                else:
+                    st.session_state.transcribed_text = result["text"]
+                    
+                text_area = st.text_area("📝 Transkribierter Text:", st.session_state.transcribed_text, height=200)
                 
                 # Buttons-Container
                 col1, col2 = st.columns(2)
                 
-                # Copy-Button mit JavaScript
+                # Streamlit-basierter Copy-Button
                 with col1:
-                    st.markdown(get_clipboard_button(transcribed_text), unsafe_allow_html=True)
+                    if st.button("📋 In die Zwischenablage kopieren", key="copy_btn", use_container_width=True):
+                        try:
+                            pyperclip.copy(st.session_state.transcribed_text)
+                            st.success("✅ Text in die Zwischenablage kopiert!")
+                        except Exception as e:
+                            st.error(f"Fehler beim Kopieren: {str(e)}")
                 
                 # Download-Button
                 with col2:
-                    st.markdown(get_text_download_link(transcribed_text), unsafe_allow_html=True)
+                    st.markdown(get_text_download_link(st.session_state.transcribed_text), unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"Fehler beim Transkribieren: {str(e)}")

@@ -1,4 +1,5 @@
 streamlit>=1.24.0
 openai-whisper>=20240930
 streamlit-audiorecorder>=0.0.6
-pydub>=0.25.1 
+pydub>=0.25.1
+pyperclip>=1.8.2 
