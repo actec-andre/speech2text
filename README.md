@@ -36,7 +36,7 @@ Lade FFmpeg von [ffmpeg.org](https://ffmpeg.org/download.html) herunter und füg
 
 1. Repository klonen oder Dateien herunterladen:
 ```bash
-git clone https://github.com/yourusername/speech2text.git
+git clone https://github.com/actec-andre/speech2text.git
 cd speech2text
 ```
 
@@ -48,7 +48,7 @@ source venv/bin/activate  # Unter Windows: venv\Scripts\activate
 
 3. Erforderliche Pakete installieren:
 ```bash
-pip install streamlit openai-whisper streamlit-audiorecorder
+pip install -r requirements.txt
 ```
 
 ## 🚀 Anwendung starten
