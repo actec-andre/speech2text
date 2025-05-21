@@ -86,4 +86,4 @@ Die App ist dann verfügbar unter: http://localhost:8501
 
 ## 📄 Lizenz
 
-MIT 
+Veröffentlicht unter der [MIT-Lizenz](LICENSE).

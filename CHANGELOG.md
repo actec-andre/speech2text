@@ -54,4 +54,5 @@ und dieses Projekt folgt der [Semantischen Versionierung](https://semver.org/spe
 ### Hinzugefügt
 - Basis-Implementierung mit Whisper
 - Audioaufnahme und -wiedergabe
-- Transkription von Sprache zu Text 
+- Transkription von Sprache zu Text
+

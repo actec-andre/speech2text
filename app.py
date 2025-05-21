@@ -5,11 +5,22 @@ import tempfile
 import os
 import base64
 import pyperclip
+import hashlib
 
 st.set_page_config(page_title="🗣️ Sprach-Diktierer", layout="centered")
 st.title("🎤 Sprache zu Text")
 
 st.write("Drücke den Button, sprich deinen Text, und lass Whisper ihn transkribieren.")
+
+# Session State initialisieren
+if 'transcribed_text' not in st.session_state:
+    st.session_state.transcribed_text = ''
+if 'initial_prompt' not in st.session_state:
+    st.session_state.initial_prompt = ''
+if 'alternative_results' not in st.session_state:
+    st.session_state.alternative_results = []
+if 'last_audio_hash' not in st.session_state:
+    st.session_state.last_audio_hash = None
 
 # Konfigurationsoptionen
 with st.sidebar:
@@ -192,116 +203,98 @@ audio = audiorecorder("🎙️ Aufnahme starten", "🛑 Aufnahme stoppen")
 if "copy_success" in st.session_state:
     st.session_state.copy_success = False
 
+current_audio_hash = hashlib.md5(audio.raw_data).hexdigest() if len(audio) > 0 else None
+
 if len(audio) > 0:
     # Zeige Audio-Player im Browser
     st.audio(audio.export().read(), format="audio/wav")
 
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-            audio.export(tmpfile.name, format="wav")
-            audio_path = tmpfile.name
+    transcribe_needed = st.session_state.last_audio_hash != current_audio_hash
 
-        with st.spinner(f"🔍 Whisper ({model_type}) transkribiert dein Audio..."):
+    if transcribe_needed:
+        st.session_state.last_audio_hash = current_audio_hash
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
+                audio.export(tmpfile.name, format="wav")
+                audio_path = tmpfile.name
+
+            with st.spinner(f"🔍 Whisper ({model_type}) transkribiert dein Audio..."):
+                try:
+                    model = load_whisper_model(model_type)
+
+                    if tech_mode == "Odoo (ERP)":
+                        odoo_prompts = generate_odoo_prompts()
+                        initial_prompt = odoo_prompts[0]
+                        transcription_options = {
+                            "language": None if language == "auto" else language,
+                            "initial_prompt": initial_prompt,
+                            "task": "transcribe"
+                        }
+                        result = model.transcribe(audio_path, **transcription_options)
+                        st.success("✅ Fertig!")
+
+                        alternative_results = []
+                        for i, prompt in enumerate(odoo_prompts[1:], 1):
+                            with st.spinner(f"🔄 Alternative Transkription {i} wird erstellt..."):
+                                alt_options = transcription_options.copy()
+                                alt_options["initial_prompt"] = prompt
+                                alt_result = model.transcribe(audio_path, **alt_options)
+                                alternative_results.append({
+                                    "text": alt_result["text"],
+                                    "prompt": prompt
+                                })
+                    else:
+                        initial_prompt = generate_prompt(tech_mode, multilingual)
+                        transcription_options = {
+                            "language": None if language == "auto" else language,
+                            "initial_prompt": initial_prompt,
+                            "task": "transcribe"
+                        }
+                        result = model.transcribe(audio_path, **transcription_options)
+                        st.success("✅ Fertig!")
+                        alternative_results = []
+
+                    st.session_state.transcribed_text = result["text"]
+                    st.session_state.initial_prompt = initial_prompt
+                    st.session_state.alternative_results = alternative_results
+                except Exception as e:
+                    st.error(f"Fehler beim Transkribieren: {str(e)}")
+        except Exception as e:
+            st.error(f"Fehler beim Verarbeiten der Audiodatei: {str(e)}")
+        finally:
+            if 'audio_path' in locals() and os.path.exists(audio_path):
+                os.unlink(audio_path)
+
+    text_area = st.text_area("📝 Transkribierter Text:", st.session_state.transcribed_text, height=200)
+
+    with st.expander("Verwendeter Prompt"):
+        st.code(st.session_state.initial_prompt)
+
+    if tech_mode == "Odoo (ERP)" and st.session_state.alternative_results:
+        for i, alt in enumerate(st.session_state.alternative_results, 1):
+            with st.expander(f"Alternative Transkription {i}"):
+                st.text_area(f"Text (Variante {i}):", alt["text"], height=100)
+                st.code(alt["prompt"], language="text")
+
+                if st.button(f"Diese Variante verwenden", key=f"use_alt_{i}"):
+                    st.session_state.transcribed_text = alt["text"]
+                    st.experimental_rerun()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if "copy_success" not in st.session_state:
+            st.session_state.copy_success = False
+
+        if st.button("📋 In die Zwischenablage kopieren", key="copy_btn", use_container_width=True):
             try:
-                model = load_whisper_model(model_type)
-                
-                # Standardmäßiger oder Odoo-spezifischer Prompt
-                if tech_mode == "Odoo (ERP)":
-                    # Bei Odoo: Verwende die optimierten Prompts
-                    odoo_prompts = generate_odoo_prompts()
-                    
-                    # Wähle den Default-Prompt für die erste Transkription
-                    initial_prompt = odoo_prompts[0]
-                    
-                    # Verbesserte Transkription mit Odoo-spezifischen Prompts
-                    transcription_options = {
-                        "language": None if language == "auto" else language,
-                        "initial_prompt": initial_prompt,
-                        "task": "transcribe"
-                    }
-                    
-                    result = model.transcribe(audio_path, **transcription_options)
-                    st.success("✅ Fertig!")
-                    
-                    # Zusätzlich alternative Transkriptionen mit anderen Prompts versuchen
-                    alternative_results = []
-                    
-                    for i, prompt in enumerate(odoo_prompts[1:], 1):
-                        with st.spinner(f"🔄 Alternative Transkription {i} wird erstellt..."):
-                            alt_options = transcription_options.copy()
-                            alt_options["initial_prompt"] = prompt
-                            alt_result = model.transcribe(audio_path, **alt_options)
-                            alternative_results.append({
-                                "text": alt_result["text"],
-                                "prompt": prompt
-                            })
-                else:
-                    # Für andere Modi: Standard-Prompt verwenden
-                    initial_prompt = generate_prompt(tech_mode, multilingual)
-                    
-                    # Optimierte Transkription für gemischtes Deutsch/Englisch
-                    transcription_options = {
-                        "language": None if language == "auto" else language,
-                        "initial_prompt": initial_prompt,
-                        "task": "transcribe"
-                    }
-                    
-                    result = model.transcribe(audio_path, **transcription_options)
-                    st.success("✅ Fertig!")
-                    alternative_results = []
-                
-                # Text-Area für Transkription und Session State für die Zwischenablage
-                if 'transcribed_text' not in st.session_state:
-                    st.session_state.transcribed_text = result["text"]
-                else:
-                    st.session_state.transcribed_text = result["text"]
-                    
-                text_area = st.text_area("📝 Transkribierter Text:", st.session_state.transcribed_text, height=200)
-                
-                # Zeige den verwendeten Prompt an
-                with st.expander("Verwendeter Prompt"):
-                    st.code(initial_prompt)
-                
-                # Alternative Transkriptionen anzeigen (nur für Odoo)
-                if tech_mode == "Odoo (ERP)" and alternative_results:
-                    for i, alt in enumerate(alternative_results, 1):
-                        with st.expander(f"Alternative Transkription {i}"):
-                            st.text_area(f"Text (Variante {i}):", alt["text"], height=100)
-                            st.code(alt["prompt"], language="text")
-                            
-                            # Button zum Ersetzen der Haupttranskription
-                            if st.button(f"Diese Variante verwenden", key=f"use_alt_{i}"):
-                                st.session_state.transcribed_text = alt["text"]
-                                st.experimental_rerun()
-                
-                # Buttons-Container
-                col1, col2 = st.columns(2)
-                
-                # Verbesserte Implementierung des Copy-Buttons mit Session State
-                with col1:
-                    if "copy_success" not in st.session_state:
-                        st.session_state.copy_success = False
-                        
-                    if st.button("📋 In die Zwischenablage kopieren", key="copy_btn", use_container_width=True):
-                        try:
-                            pyperclip.copy(st.session_state.transcribed_text)
-                            st.session_state.copy_success = True
-                        except Exception as e:
-                            st.error(f"Fehler beim Kopieren: {str(e)}")
-                    
-                    # Erfolgs-Nachricht anzeigen, ohne Seite neu zu laden
-                    if st.session_state.copy_success:
-                        st.success("✅ Text in die Zwischenablage kopiert!")
-                
-                # Download-Button
-                with col2:
-                    st.markdown(get_text_download_link(st.session_state.transcribed_text), unsafe_allow_html=True)
-                
+                pyperclip.copy(st.session_state.transcribed_text)
+                st.session_state.copy_success = True
             except Exception as e:
-                st.error(f"Fehler beim Transkribieren: {str(e)}")
-    except Exception as e:
-        st.error(f"Fehler beim Verarbeiten der Audiodatei: {str(e)}")
-    finally:
-        # Temporäre Datei aufräumen
-        if 'audio_path' in locals() and os.path.exists(audio_path):
-            os.unlink(audio_path)
+                st.error(f"Fehler beim Kopieren: {str(e)}")
+
+        if st.session_state.copy_success:
+            st.success("✅ Text in die Zwischenablage kopiert!")
+
+    with col2:
+        st.markdown(get_text_download_link(st.session_state.transcribed_text), unsafe_allow_html=True)
