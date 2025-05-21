@@ -1,0 +1,30 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# Streamlit
+*.wav
+streamlit.log
+
+# Misc
+.DS_Store
+*.log
+.cache/
+.pytest_cache/
+
+# IDEs and editors
+.vscode/
+.idea/
